@@ -1,0 +1,43 @@
+from datetime import date, timedelta
+import mykbar as kb
+import numpy as np
+
+def UpdateMA(KBar1M, symbol):
+    # 取得要計算MA的時間週期
+    number = 6  # 1 day kbar for short-term trading
+    # 取得N日的股票日資料 returns a datetime.date object
+    today = date.today()
+    start = today - timedelta(days=number)
+    
+    # contract = kb.getContract(api, symbol=symbol, the_type="stock")
+
+    # make sure the collection is in 1m candle data. may change to 5M if i want to replace 1m with 5m candle data for intraday trade.
+    kb.backFillKbars(
+        collectionName=symbol, period='1m', start=start, end=today
+    )
+    df = kb.readFromDB("kbars", symbol, start, end=today)
+
+    # # Get today's date
+    # today = date.today()
+
+    # # Calculate yesterday's date by subtracting one day
+    # yesterday = today - timedelta(days = 1)
+
+    # # Format yesterday's date as a string (YYYY-MM-DD)
+    # formatted_date = yesterday.strftime('%Y-%m-%d')
+
+    # contract = api.Contracts.Stocks[symbol]
+    # dict_ticks = api.kbars(contract=contract, date=formatted_date)
+    # df=pd.DataFrame({**dict_ticks})   # he double asterisk (**) is a Python operator used for unpacking dictionaries.
+    # df.index=pd.to_datetime(df.ts)
+    df.columns = df.columns.str.lower()
+    # df.drop('_id', axis=1)
+    # df.rename(columns={'ts': 'time'})
+    for index, row in df.iterrows():
+        KBar1M.TAKBar["time"] = np.append(KBar1M.TAKBar["time"], row.ts)
+        KBar1M.TAKBar["open"] = np.append(KBar1M.TAKBar["open"], row.open)
+        KBar1M.TAKBar["close"] = np.append(KBar1M.TAKBar["close"], row.close)
+        KBar1M.TAKBar["high"] = np.append(KBar1M.TAKBar["high"], row.high)
+        KBar1M.TAKBar["low"] = np.append(KBar1M.TAKBar["low"], row.low)
+        KBar1M.TAKBar["volume"] = np.append(KBar1M.TAKBar["volume"], row.volume)
+    # KBar1M.TAKBar = np.vstack((KBar1M.TAKBar, df.to_numpy()))
